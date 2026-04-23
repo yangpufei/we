@@ -1,64 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <title>验证后收听录音</title>
-    <style>
-        body{text-align:center; margin-top:100px; font-size:18px;}
-        input{padding:8px 12px; font-size:16px; width:250px; margin:10px;}
-        button{padding:8px 20px; font-size:16px;}
-        #audioArea, #downloadArea{display:none; margin-top:30px;}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我们的初次相遇</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif}
+body{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#fceff4;
+  padding:20px;
+  background-image: url('bg1.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  transition: background-image 1s ease-in-out;
+}
+.box{background:rgba(255,255,255,0.9);padding:40px;border-radius:16px;width:100%;max-width:520px;text-align:center;backdrop-filter:blur(6px)}
+h2{margin-bottom:20px;color:#d15a7c}
+p{margin-bottom:15px;color:#555}
+input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bottom:16px;font-size:16px}
+.btn-pink{padding:12px 26px;background:#f06c9b;color:white;border:none;border-radius:10px;cursor:pointer;font-size:16px}
+.btn-blue{padding:12px 26px;background:#6bb3ef;color:white;border:none;border-radius:10px;cursor:pointer;font-size:16px}
+.download-btn{background:#76c479;color:white;padding:12px 26px;border-radius:10px;text-decoration:none;display:inline-block}
+.player{margin:22px 0}
+.download{display:none;margin-top:20px}
+.tip{color:#e65c7c;margin-top:10px}
+</style>
 </head>
 <body>
 
-<h2>请回答问题，才能收听录音</h2>
-<input type="text" id="answer1" placeholder="输入问题1答案">
-<br>
-<button onclick="check1()">验证并收听</button>
-
-<div id="audioArea">
-    <h3>收听成功</h3>
-    <audio controls id="myAudio" style="width:80%;max-width:400px;">
-        <source src="20240427_222755_[通话录音].m4a">
-    </audio>
-
-    <h3>请再回答一个问题，才能下载</h3>
-    <input type="text" id="answer2" placeholder="输入问题2答案">
-    <br>
-    <button onclick="check2()">验证并下载</button>
+<div class="box" id="step1">
+  <h2>解锁我们初见的声音</h2>
+  <p>请回答问题，收听我们第一次通话的录音</p>
+  <p>问题1：我的生日是？</p>
+  <input type="text" id="ans1" placeholder="请输入答案">
+  <br>
+  <button class="btn-pink" onclick="check1()">验证并收听</button>
+  <div class="tip" id="msg1"></div>
 </div>
 
-<div id="downloadArea">
-    <h3>验证成功</h3>
-    <a id="downloadLink" href="20240427_222755_[通话录音].m4a" download>点击下载录音</a>
+<div class="box" id="step2" style="display:none;">
+  <h2>✅ 欢迎回到初见时刻</h2>
+  <div class="player">
+    <audio controls controlsList="nodownload">
+      <source src="20240427_222755郭同学.m4a" type="audio/mp4">
+    </audio>
+  </div>
+
+  <h3>再答对一题，即可保存这份回忆</h3>
+  <p>问题2：我的手机号后四位？</p>
+  <input type="text" id="ans2" placeholder="请输入答案">
+  <br>
+  <button class="btn-blue" onclick="check2()">验证并下载</button>
+  <div class="tip" id="msg2"></div>
+
+  <div class="download" id="downArea">
+    <h3>💌 回忆已为你解锁</h3>
+    <a href="20240427_222755郭同学.m4a" download="我们的初次通话录音" class="download-btn">点击下载录音</a>
+  </div>
 </div>
 
 <script>
-// ======================
-// 你可以自己改答案
-// ======================
-const rightAnswer1 = "abc123";  // 第一个问题答案
-const rightAnswer2 = "download666"; // 第二个问题答案
+const right1 = "0101";   // 第一题答案
+const right2 = "1234";   // 第二题答案
+
+// 背景图轮播
+const bgImages = ['bg1.png', 'bg2.png', 'bg3.png'];
+let currentBg = 0;
+
+function changeBackground() {
+  document.body.style.backgroundImage = `url('${bgImages[currentBg]}')`;
+  currentBg = (currentBg + 1) % bgImages.length;
+}
+
+// 每5秒切换一张背景图
+setInterval(changeBackground, 5000);
 
 function check1(){
-    var v = document.getElementById("answer1").value;
-    if(v == rightAnswer1){
-        document.getElementById("audioArea").style.display = "block";
-    }else{
-        alert("答案不正确");
-    }
+  let v = document.getElementById("ans1").value.trim();
+  if(v === right1){
+    document.getElementById("step1").style.display="none";
+    document.getElementById("step2").style.display="block";
+  }else{
+    document.getElementById("msg1").innerText="❌ 答案不对哦，再想想～";
+  }
 }
 
 function check2(){
-    var v = document.getElementById("answer2").value;
-    if(v == rightAnswer2){
-        document.getElementById("downloadArea").style.display = "block";
-    }else{
-        alert("答案不正确");
-    }
+  let v = document.getElementById("ans2").value.trim();
+  if(v === right2){
+    document.getElementById("downArea").style.display="block";
+  }else{
+    document.getElementById("msg2").innerText="❌ 再试一次吧";
+  }
 }
 </script>
-
 </body>
 </html>
