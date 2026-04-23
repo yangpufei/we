@@ -6,57 +6,35 @@
 <title>我们的初次相遇</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif}
-
-/* 全屏背景视频 */
 #bgVideo{
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  z-index: -1;
-  pointer-events: none;
+  position: fixed;top:0;left:0;width:100vw;height:100vh;
+  object-fit:cover;z-index:-1;pointer-events:none;
 }
-
 body{
-  min-height:100vh;
-  display:flex;
-  justify-content:center; 
-  align-items:center;
-  padding:20px;
-  overflow: hidden;
+  min-height:100vh;display:flex;justify-content:center;
+  align-items:center;padding:20px;overflow:hidden;
 }
-.box{
-  background:rgba(255,255,255,0.9);
-  padding:40px;
-  border-radius:16px;
-  width:100%;
-  max-width:520px;
-  text-align:center;
-  backdrop-filter:blur(6px);
-}
+.box{background:rgba(255,255,255,0.9);padding:40px;border-radius:16px;width:100%;max-width:520px;text-align:center;backdrop-filter:blur(6px)}
 h2{margin-bottom:20px;color:#d15a7c}
 p{margin-bottom:15px;color:#555}
 input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bottom:16px;font-size:16px}
 .btn-pink{padding:12px 26px;background:#f06c9b;color:white;border:none;border-radius:10px;cursor:pointer;font-size:16px}
 .btn-blue{padding:12px 26px;background:#6bb3ef;color:white;border:none;border-radius:10px;cursor:pointer;font-size:16px}
 .download-btn{background:#76c479;color:white;padding:12px 26px;border-radius:10px;text-decoration:none;display:inline-block}
-.player{margin:22px 0}
+.player{margin:22px 0;display:none;}
 .download{display:none;margin-top:20px}
 .tip{color:#e65c7c;margin-top:10px}
 </style>
 </head>
 <body>
 
-<!-- 全屏MP4背景视频 -->
 <video id="bgVideo" muted loop autoplay>
   <source src="bg.mp4" type="video/mp4">
 </video>
 
 <div class="box" id="step1">
   <h2>解锁我们初见的声音</h2>
-  <p>请回答问题，收听我们第一次通话的录音AAA</p>
+  <p>请回答问题，收听我们第一次通话的录音</p>
   <p>问题1：我的生日是？</p>
   <input type="text" id="ans1" placeholder="请输入答案">
   <br>
@@ -66,10 +44,9 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 
 <div class="box" id="step2" style="display:none;">
   <h2>✅ 欢迎回到初见时刻</h2>
-  <div class="player">
-    <audio id="recordAudio" controls controlsList="nodownload">
-      <source src="20240427_222755郭同学.m4a" type="audio/mp4">
-    
+  
+  <div class="player" id="player">
+    <audio id="recordAudio" controls controlsList="nodownload"></audio>
   </div>
 
   <h3>再答对一题，即可保存这份回忆</h3>
@@ -81,51 +58,75 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 
   <div class="download" id="downArea">
     <h3>💌 回忆已为你解锁</h3>
-    <a href="20240427_222755郭同学.m4a" download="我们的初次通话录音" class="download-btn">点击下载录音</a>
+    <a id="downloadLink" download="我们的初次通话录音" class="download-btn">点击下载录音</a>
   </div>
 </div>
 
 <script>
-const right1 = "0101";   // 第一题答案
-const right2 = "1234";   // 第二题答案
+// ==============================================
+// 🔒 安全核心：这里存的是【加密答案】，别人看不到真实答案
+// ==============================================
+const secureAnswer1 = "44aee34706c544c58822c77006b12b2faadf2c4d4592e0d513166b29371f10f7";
+const secureAnswer2 = "03ac674216f7e2c8f390ee5abe05ba75a11a3136812690132184b65a02211618";
 
-// 获取视频 & 录音元素
+// 录音真实路径（答对后才加载）
+const realAudioUrl = "20240427_222755郭同学.m4a";
+
+// ==============================================
+// 工具函数：加密（别人无法反向破解）
+// ==============================================
+async function sha256(str) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// ==============================================
+// 第一题验证（加密对比）
+// ==============================================
+async function check1() {
+  let val = document.getElementById("ans1").value.trim();
+  let hash = await sha256(val);
+  
+  if (hash === secureAnswer1) {
+    document.getElementById("step1").style.display = "none";
+    document.getElementById("step2").style.display = "block";
+    // ✅ 答对才加载录音
+    let audio = document.getElementById("recordAudio");
+    audio.src = realAudioUrl;
+    document.getElementById("player").style.display = "block";
+  } else {
+    document.getElementById("msg1").innerText = "❌ 答案不对哦，再想想～";
+  }
+}
+
+// ==============================================
+// 第二题验证
+// ==============================================
+async function check2() {
+  let val = document.getElementById("ans2").value.trim();
+  let hash = await sha256(val);
+  
+  if (hash === secureAnswer2) {
+    document.getElementById("downArea").style.display = "block";
+    document.getElementById("downloadLink").href = realAudioUrl;
+  } else {
+    document.getElementById("msg2").innerText = "❌ 再试一次吧";
+  }
+}
+
+// ------------------------------
+// 视频与录音互斥
+// ------------------------------
 const bgVideo = document.getElementById('bgVideo');
 const recordAudio = document.getElementById('recordAudio');
 
-// 录音播放 → 暂停背景视频
-recordAudio.addEventListener('play', function() {
-  bgVideo.pause();
-});
-
-// 录音暂停 / 播放结束 → 恢复背景视频
-recordAudio.addEventListener('pause', function() {
-  bgVideo.play();
-});
-recordAudio.addEventListener('ended', function() {
-  bgVideo.play();
-});
-
-// 移除原背景图轮播 不再需要
-
-function check1(){
-  let v = document.getElementById("ans1").value.trim();
-  if(v === right1){
-    document.getElementById("step1").style.display="none";
-    document.getElementById("step2").style.display="block";
-  }else{
-    document.getElementById("msg1").innerText="❌ 答案不对哦，再想想～";
-  }
-}
-
-function check2(){
-  let v = document.getElementById("ans2").value.trim();
-  if(v === right2){
-    document.getElementById("downArea").style.display="block";
-  }else{
-    document.getElementById("msg2").innerText="❌ 再试一次吧";
-  }
-}
+recordAudio.addEventListener('play', () => bgVideo.pause());
+recordAudio.addEventListener('pause', () => bgVideo.play());
+recordAudio.addEventListener('ended', () => bgVideo.play());
 </script>
 </body>
 </html>
