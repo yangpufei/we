@@ -30,9 +30,18 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 .player{margin:22px 0}
 .download{display:none;margin-top:20px}
 .tip{color:#e65c7c;margin-top:10px}
+/* 隐藏背景音乐播放器 */
+.bg-music {
+  display: none;
+}
 </style>
 </head>
 <body>
+
+<!-- 背景音乐元素（隐藏） -->
+<audio id="bgMusic" loop class="bg-music">
+  <source src="background.mp3" type="audio/mpeg">
+</audio>
 
 <div class="box" id="step1">
   <h2>解锁我们初见的声音</h2>
@@ -47,7 +56,7 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 <div class="box" id="step2" style="display:none;">
   <h2>✅ 欢迎回到初见时刻</h2>
   <div class="player">
-    <audio controls controlsList="nodownload">
+    <audio id="recordAudio" controls controlsList="nodownload">
       <source src="20240427_222755郭同学.m4a" type="audio/mp4">
     </audio>
   </div>
@@ -68,6 +77,29 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 <script>
 const right1 = "0101";   // 第一题答案
 const right2 = "1234";   // 第二题答案
+
+// 获取音频元素
+const bgMusic = document.getElementById('bgMusic');
+const recordAudio = document.getElementById('recordAudio');
+
+// 页面加载后自动播放背景音乐
+window.addEventListener('DOMContentLoaded', function() {
+  // 尝试播放背景音乐（浏览器策略限制，部分需要用户交互后播放）
+  bgMusic.play().catch(err => console.log('等待用户交互后播放背景音乐'));
+});
+
+// 录音播放时 - 暂停背景音乐
+recordAudio.addEventListener('play', function() {
+  bgMusic.pause();
+});
+
+// 录音暂停/结束时 - 恢复背景音乐
+recordAudio.addEventListener('pause', function() {
+  bgMusic.play();
+});
+recordAudio.addEventListener('ended', function() {
+  bgMusic.play();
+});
 
 // 背景图轮播
 const bgImages = ['bg1.png', 'bg2.png', 'bg3.png'];
