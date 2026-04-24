@@ -56,8 +56,8 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 <!-- 加载中提示 -->
 <div id="loadingTip">
   <div class="spinner"></div>
-  <p>正在加载背景视频...</p>
-  <p style="font-size:13px;color:#888;margin-top:8px;">建议在电脑浏览器打开，体验更流畅</p>
+  <p>正在加载资源，大喊三声"臭狗屎"可助力加速</p>
+  <p style="font-size:13px;color:#888;margin-top:8px;">老登建议：在电脑浏览器打开，体验更流畅</p>
 </div>
 
 <video id="bgVideo" autoplay preload="auto"></video>
@@ -65,10 +65,10 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 <div class="box" id="step1">
   <h2>解锁我们初见的声音</h2>
   <div class="tip-box">
-    💡 温馨提示：建议在电脑浏览器打开，视频加载更稳定哦
+    💡 温馨提示：建议在电脑浏览器打开，资源加载更稳定哦
   </div>
   <p>请回答问题，收听我们第一次通话的录音</p>
-  <p>问题1：我的生日是？</p>
+  <p>问题1：你的名字？</p>
   <input type="text" id="ans1" placeholder="请输入答案">
   <br>
   <button class="btn-pink" onclick="check1()">验证并收听</button>
@@ -81,8 +81,8 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
     <audio id="recordAudio" controls controlsList="nodownload">
   </div>
 
-  <h3>再答对一题，即可保存这份回忆</h3>
-  <p>问题2：我的手机号后四位？</p>
+  <h3>进入第二题，可保存这份回忆</h3>
+  <p>问题2：我们初遇在哪里？</p>
   <input type="text" id="ans2" placeholder="请输入答案">
   <br>
   <button class="btn-blue" onclick="check2()">验证并下载</button>
@@ -96,8 +96,8 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 
 <script>
 // 明文答案
-const right1 = "0101";  // 生日
-const right2 = "1234";  // 手机后四位
+const right1 = "固特异";  // 生日
+const right2 = "夷陵长江大桥";  // 手机后四位
 const realAudioUrl = "20240427_222755郭同学.m4a";
 
 // 5段背景视频切片
