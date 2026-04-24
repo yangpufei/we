@@ -28,9 +28,8 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 </head>
 <body>
 
-<video id="bgVideo" muted loop autoplay>
-  <source src="bg.mp4" type="video/mp4">
-</video>
+<!-- 视频切片自动轮播 -->
+<video id="bgVideo" muted autoplay></video>
 
 <div class="box" id="step1">
   <h2>解锁我们初见的声音</h2>
@@ -64,52 +63,84 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 
 <script>
 // ==============================================
-// 🔒 安全核心：这里存的是【加密答案】，别人看不到真实答案
+// 🔒 安全答案（加密后）
 // ==============================================
 const secureAnswer1 = "44aee34706c544c58822c77006b12b2faadf2c4d4592e0d513166b29371f10f7";
 const secureAnswer2 = "03ac674216f7e2c8f390ee5abe05ba75a11a3136812690132184b65a02211618";
 
-// 录音真实路径（答对后才加载）
+// 录音真实路径
 const realAudioUrl = "20240427_222755郭同学.m4a";
 
 // ==============================================
-// 工具函数：加密（别人无法反向破解）
+// 🎬 视频切片列表（自动顺序播放）
+// ==============================================
+const videoSegments = [
+  "bg1.mp4",
+  "bg2.mp4",
+  "bg3.mp4",
+  "bg4.mp4",
+  "bg5.mp4"
+];
+let currentVideoIndex = 0;
+const bgVideo = document.getElementById('bgVideo');
+
+// 播放下一段视频
+function playNextVideo() {
+  if (currentVideoIndex >= videoSegments.length) {
+    currentVideoIndex = 0; // 循环从头开始
+  }
+  bgVideo.src = videoSegments[currentVideoIndex];
+  bgVideo.play();
+  currentVideoIndex++;
+}
+
+// 一段播完 → 自动下一段
+bgVideo.addEventListener('ended', playNextVideo);
+
+// 初始化启动
+playNextVideo();
+
+// ==============================================
+// 录音 ↔ 视频 互斥控制
+// ==============================================
+const recordAudio = document.getElementById('recordAudio');
+
+recordAudio.addEventListener('play', () => {
+  bgVideo.pause(); // 播放录音 → 暂停视频
+});
+recordAudio.addEventListener('pause', () => {
+  bgVideo.play(); // 暂停录音 → 继续视频
+});
+recordAudio.addEventListener('ended', () => {
+  bgVideo.play(); // 录音播完 → 继续视频
+});
+
+// ==============================================
+// 加密验证逻辑
 // ==============================================
 async function sha256(str) {
   const encoder = new TextEncoder();
   const data = encoder.encode(str);
   const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-// ==============================================
-// 第一题验证（加密对比）
-// ==============================================
 async function check1() {
   let val = document.getElementById("ans1").value.trim();
   let hash = await sha256(val);
-  
   if (hash === secureAnswer1) {
     document.getElementById("step1").style.display = "none";
     document.getElementById("step2").style.display = "block";
-    // ✅ 答对才加载录音
-    let audio = document.getElementById("recordAudio");
-    audio.src = realAudioUrl;
+    recordAudio.src = realAudioUrl;
     document.getElementById("player").style.display = "block";
   } else {
     document.getElementById("msg1").innerText = "❌ 答案不对哦，再想想～";
   }
 }
 
-// ==============================================
-// 第二题验证
-// ==============================================
 async function check2() {
   let val = document.getElementById("ans2").value.trim();
   let hash = await sha256(val);
-  
   if (hash === secureAnswer2) {
     document.getElementById("downArea").style.display = "block";
     document.getElementById("downloadLink").href = realAudioUrl;
@@ -117,16 +148,6 @@ async function check2() {
     document.getElementById("msg2").innerText = "❌ 再试一次吧";
   }
 }
-
-// ------------------------------
-// 视频与录音互斥
-// ------------------------------
-const bgVideo = document.getElementById('bgVideo');
-const recordAudio = document.getElementById('recordAudio');
-
-recordAudio.addEventListener('play', () => bgVideo.pause());
-recordAudio.addEventListener('pause', () => bgVideo.play());
-recordAudio.addEventListener('ended', () => bgVideo.play());
 </script>
 </body>
 </html>
