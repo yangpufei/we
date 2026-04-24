@@ -6,10 +6,35 @@
 <title>我们的初次相遇</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif}
+
 #bgVideo{
   position: fixed;top:0;left:0;width:100vw;height:100vh;
   object-fit:cover;z-index:-1;pointer-events:none;
+  opacity:0; /* 默认透明，加载完成再显示 */
+  transition: opacity 0.8s ease;
 }
+
+/* 加载提示 */
+#loadingTip{
+  position: fixed;top:0;left:0;width:100vw;height:100vh;
+  background:#fceff4;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  z-index:999;
+  color:#d15a7c;
+}
+#loadingTip .spinner{
+  width:40px;height:40px;border:4px solid #f06c9b;border-top-color:transparent;
+  border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 温馨提示 */
+.tip-box{
+  background:rgba(255,255,255,0.95);
+  padding:16px;border-radius:10px;margin-bottom:20px;
+  color:#d15a7c;font-size:14px;line-height:1.6;
+}
+
 body{
   min-height:100vh;display:flex;justify-content:center;
   align-items:center;padding:20px;overflow:hidden;
@@ -28,11 +53,20 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 </head>
 <body>
 
-<!-- 已删除 muted ，视频恢复原声 -->
-<video id="bgVideo" autoplay></video>
+<!-- 加载中提示 -->
+<div id="loadingTip">
+  <div class="spinner"></div>
+  <p>正在加载背景视频...</p>
+  <p style="font-size:13px;color:#888;margin-top:8px;">建议在电脑浏览器打开，体验更流畅</p>
+</div>
+
+<video id="bgVideo" autoplay preload="auto"></video>
 
 <div class="box" id="step1">
   <h2>解锁我们初见的声音</h2>
+  <div class="tip-box">
+    💡 温馨提示：建议在电脑浏览器打开，视频加载更稳定哦
+  </div>
   <p>请回答问题，收听我们第一次通话的录音</p>
   <p>问题1：我的生日是？</p>
   <input type="text" id="ans1" placeholder="请输入答案">
@@ -43,7 +77,6 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 
 <div class="box" id="step2" style="display:none;">
   <h2>✅ 欢迎回到初见时刻</h2>
-  
   <div class="player" id="player">
     <audio id="recordAudio" controls controlsList="nodownload">
   </div>
@@ -62,12 +95,12 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 </div>
 
 <script>
-// 🔒 加密答案哈希值
-const secureAnswer1 = "7c4a8d09ca3762af61e59520943dc26494f8941b1606f9e8d72a0a1d45123579";
-const secureAnswer2 = "03ac674216f7e2c8f390ee5abe05ba75a11a3136812690132184b65a02211618";
+// 明文答案
+const right1 = "0101";  // 生日
+const right2 = "1234";  // 手机后四位
 const realAudioUrl = "20240427_222755郭同学.m4a";
 
-// 🎬 5段切片视频列表
+// 5段背景视频切片
 const videoSegments = [
   "bg1.mp4",
   "bg2.mp4",
@@ -77,55 +110,70 @@ const videoSegments = [
 ];
 let currentVideoIndex = 0;
 const bgVideo = document.getElementById('bgVideo');
+const loadingTip = document.getElementById('loadingTip');
 
-// 切换下一段视频、循环播放
+// 视频加载完成后隐藏加载提示
+bgVideo.addEventListener('canplaythrough', () => {
+  loadingTip.style.display = 'none';
+  bgVideo.style.opacity = 1;
+});
+
+// 视频加载失败降级（防止一直卡着）
+bgVideo.addEventListener('error', () => {
+  loadingTip.innerHTML = `
+    <p style="color:#e65c7c;">视频加载失败了~</p>
+    <p style="font-size:13px;color:#888;">建议在电脑浏览器打开试试</p>
+  `;
+  // 3秒后自动隐藏提示，继续显示页面
+  setTimeout(()=>{
+    loadingTip.style.display = 'none';
+    bgVideo.style.opacity = 1;
+  }, 3000);
+});
+
+// 顺序循环播放视频
 function playNextVideo() {
-  if (currentVideoIndex >= videoSegments.length) {
-    currentVideoIndex = 0;
-  }
+  currentVideoIndex = currentVideoIndex >= videoSegments.length ? 0 : currentVideoIndex;
   bgVideo.src = videoSegments[currentVideoIndex];
-  bgVideo.play();
+  bgVideo.load(); // 强制加载
+  bgVideo.play().catch(()=>{});
   currentVideoIndex++;
 }
 bgVideo.addEventListener('ended', playNextVideo);
-// 初始化播放
 playNextVideo();
 
-// 🔊 录音播放 = 暂停背景视频；录音暂停/结束 = 恢复视频
+// 点击页面解锁视频声音（解决浏览器自动静音）
+document.body.addEventListener('click', ()=>{
+  bgVideo.muted = false;
+  bgVideo.play().catch(()=>{});
+},{once:true});
+
+// 录音 和 背景视频 互斥
 const recordAudio = document.getElementById('recordAudio');
 recordAudio.addEventListener('play', () => bgVideo.pause());
 recordAudio.addEventListener('pause', () => bgVideo.play());
 recordAudio.addEventListener('ended', () => bgVideo.play());
 
-// SHA256加密校验
-async function sha256(str) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-async function check1() {
-  let val = document.getElementById("ans1").value.trim();
-  let hash = await sha256(val);
-  if (hash === secureAnswer1) {
-    document.getElementById("step1").style.display = "none";
-    document.getElementById("step2").style.display = "block";
+// 答题验证
+function check1(){
+  let v = document.getElementById("ans1").value.trim();
+  if(v === right1){
+    document.getElementById("step1").style.display="none";
+    document.getElementById("step2").style.display="block";
     recordAudio.src = realAudioUrl;
     document.getElementById("player").style.display = "block";
-  } else {
-    document.getElementById("msg1").innerText = "❌ 答案不对哦，再想想～";
+  }else{
+    document.getElementById("msg1").innerText="❌ 答案不对哦，再想想～";
   }
 }
 
-async function check2() {
-  let val = document.getElementById("ans2").value.trim();
-  let hash = await sha256(val);
-  if (hash === secureAnswer2) {
-    document.getElementById("downArea").style.display = "block";
+function check2(){
+  let v = document.getElementById("ans2").value.trim();
+  if(v === right2){
+    document.getElementById("downArea").style.display="block";
     document.getElementById("downloadLink").href = realAudioUrl;
-  } else {
-    document.getElementById("msg2").innerText = "❌ 再试一次吧";
+  }else{
+    document.getElementById("msg2").innerText="❌ 再试一次吧";
   }
 }
 </script>
