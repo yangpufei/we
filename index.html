@@ -28,8 +28,8 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 </head>
 <body>
 
-<!-- 视频切片自动轮播 -->
-<video id="bgVideo" muted autoplay></video>
+<!-- 已删除 muted ，视频恢复原声 -->
+<video id="bgVideo" autoplay></video>
 
 <div class="box" id="step1">
   <h2>解锁我们初见的声音</h2>
@@ -45,7 +45,7 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
   <h2>✅ 欢迎回到初见时刻</h2>
   
   <div class="player" id="player">
-    <audio id="recordAudio" controls controlsList="nodownload"></audio>
+    <audio id="recordAudio" controls controlsList="nodownload">
   </div>
 
   <h3>再答对一题，即可保存这份回忆</h3>
@@ -62,18 +62,12 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 </div>
 
 <script>
-// ==============================================
-// 🔒 安全答案（加密后）
-// ==============================================
+// 🔒 加密答案
 const secureAnswer1 = "44aee34706c544c58822c77006b12b2faadf2c4d4592e0d513166b29371f10f7";
 const secureAnswer2 = "03ac674216f7e2c8f390ee5abe05ba75a11a3136812690132184b65a02211618";
-
-// 录音真实路径
 const realAudioUrl = "20240427_222755郭同学.m4a";
 
-// ==============================================
-// 🎬 视频切片列表（自动顺序播放）
-// ==============================================
+// 🎬 5段切片视频列表
 const videoSegments = [
   "bg1.mp4",
   "bg2.mp4",
@@ -84,40 +78,26 @@ const videoSegments = [
 let currentVideoIndex = 0;
 const bgVideo = document.getElementById('bgVideo');
 
-// 播放下一段视频
+// 切换下一段视频、循环播放
 function playNextVideo() {
   if (currentVideoIndex >= videoSegments.length) {
-    currentVideoIndex = 0; // 循环从头开始
+    currentVideoIndex = 0;
   }
   bgVideo.src = videoSegments[currentVideoIndex];
   bgVideo.play();
   currentVideoIndex++;
 }
-
-// 一段播完 → 自动下一段
 bgVideo.addEventListener('ended', playNextVideo);
-
-// 初始化启动
+// 初始化播放
 playNextVideo();
 
-// ==============================================
-// 录音 ↔ 视频 互斥控制
-// ==============================================
+// 🔊 录音播放 = 暂停背景视频；录音暂停/结束 = 恢复视频
 const recordAudio = document.getElementById('recordAudio');
+recordAudio.addEventListener('play', () => bgVideo.pause());
+recordAudio.addEventListener('pause', () => bgVideo.play());
+recordAudio.addEventListener('ended', () => bgVideo.play());
 
-recordAudio.addEventListener('play', () => {
-  bgVideo.pause(); // 播放录音 → 暂停视频
-});
-recordAudio.addEventListener('pause', () => {
-  bgVideo.play(); // 暂停录音 → 继续视频
-});
-recordAudio.addEventListener('ended', () => {
-  bgVideo.play(); // 录音播完 → 继续视频
-});
-
-// ==============================================
-// 加密验证逻辑
-// ==============================================
+// SHA256加密校验
 async function sha256(str) {
   const encoder = new TextEncoder();
   const data = encoder.encode(str);
