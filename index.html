@@ -47,9 +47,7 @@ p{margin-bottom:15px;color:#555}
 input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bottom:16px;font-size:16px}
 .btn-pink{padding:12px 26px;background:#f06c9b;color:white;border:none;border-radius:10px;cursor:pointer;font-size:16px}
 .btn-blue{padding:12px 26px;background:#6bb3ef;color:white;border:none;border-radius:10px;cursor:pointer;font-size:16px}
-.download-btn{background:#76c479;color:white;padding:12px 26px;border-radius:10px;text-decoration:none;display:inline-block}
 .player{margin:22px 0;display:none;}
-.download{display:none;margin-top:20px}
 .tip{color:#e65c7c;margin-top:10px}
 </style>
 </head>
@@ -58,7 +56,7 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
 <div id="loadingTip">
   <div class="spinner"></div>
   <p>正在加载背景资源...</p>
-  <p style="font-size:13px;color:#888;margin-top:8px;">老登建议：在电脑浏览器打开，体验更流畅</p>
+  <p style="font-size:13px;color:#888;margin-top:8px;">💡 建议在电脑浏览器打开，体验更流畅</p>
 </div>
 
 <video id="bgVideo" autoplay preload="auto"></video>
@@ -83,25 +81,35 @@ input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bot
     <p class="audio-tip" id="audioTip">录音加载中...</p>
   </div>
 
-  <h3>再答对一题，即可保存这份回忆</h3>
+  <h3>继续作答，前往下一页面</h3>
+  
+  <!-- 问题2 -->
   <p>问题2：我们初遇在哪里？</p>
   <input type="text" id="ans2" placeholder="请输入答案">
   <br>
-  <button class="btn-blue" onclick="check2()">验证并下载</button>
+  <button class="btn-blue" onclick="check2()">验证问题2</button>
   <div class="tip" id="msg2"></div>
 
-  <div class="download" id="downArea">
-    <h3>💌 回忆已为你解锁</h3>
-    <a id="downloadLink" download="我们的初次通话录音" class="download-btn">点击下载录音</a>
+  <!-- 问题3 默认隐藏 -->
+  <div id="step3" style="display:none; margin-top:25px;">
+    <p>问题3：请输入最后一题答案</p>
+    <input type="text" id="ans3" placeholder="请输入答案">
+    <br>
+    <button class="btn-pink" onclick="check3()">验证并前往下一页</button>
+    <div class="tip" id="msg3"></div>
   </div>
 </div>
 
 <script>
-// ======================
-// 🔒 加密后的答案（这里替换成你自己的SHA256）
-// ======================
+// ========== 加密答案（保留你原有） ==========
 const secureAnswer1 = "14d813db48aa23d266d05d21b0c9ada23727b6c7575b9c9c02d037377e753a5d";
 const secureAnswer2 = "c71eb66a97508763d934f64bc43f4c1b441f4a90f256c95c4ca64660522298c7";
+// 👉 在这里填写你第三题答案的 SHA256
+const secureAnswer3 = "";
+
+// 👉 跳转目标页面地址（换成你要跳转的网址/另一页面文件名）
+const targetPage = "index2.html";
+
 const realAudioUrl = "20240427_222755郭同学.m4a"; 
 
 // 5段背景视频切片
@@ -118,7 +126,7 @@ const loadingTip = document.getElementById('loadingTip');
 const recordAudio = document.getElementById('recordAudio');
 const audioTip = document.getElementById('audioTip');
 
-// 视频加载完成后隐藏加载提示
+// 视频加载完成
 bgVideo.addEventListener('canplaythrough', () => {
   loadingTip.style.display = 'none';
   bgVideo.style.opacity = 1;
@@ -136,7 +144,7 @@ bgVideo.addEventListener('error', () => {
   }, 3000);
 });
 
-// 顺序循环播放视频
+// 循环切视频
 function playNextVideo() {
   currentVideoIndex = currentVideoIndex >= videoSegments.length ? 0 : currentVideoIndex;
   bgVideo.src = videoSegments[currentVideoIndex];
@@ -147,30 +155,28 @@ function playNextVideo() {
 bgVideo.addEventListener('ended', playNextVideo);
 playNextVideo();
 
-// 点击页面解锁视频声音
+// 点击解锁视频声音
 document.body.addEventListener('click', ()=>{
   bgVideo.muted = false;
   bgVideo.play().catch(()=>{});
 },{once:true});
 
-// 录音和背景视频互斥
+// 录音 & 背景视频互斥
 recordAudio.addEventListener('play', () => bgVideo.pause());
 recordAudio.addEventListener('pause', () => bgVideo.play());
 recordAudio.addEventListener('ended', () => bgVideo.play());
 
-// 录音加载状态监听
+// 录音加载提示
 recordAudio.addEventListener('loadedmetadata', () => {
   audioTip.innerText = "录音加载完成，可以播放啦~";
   setTimeout(() => audioTip.style.display = 'none', 1500);
 });
 recordAudio.addEventListener('error', () => {
-  audioTip.innerText = "录音加载失败，请检查文件路径是否正确";
+  audioTip.innerText = "录音加载失败，请检查文件路径";
   audioTip.style.color = "#e65c7c";
 });
 
-// ======================
-// SHA256加密工具函数
-// ======================
+// SHA256 加密
 async function sha256(str) {
   const encoder = new TextEncoder();
   const data = encoder.encode(str.trim());
@@ -179,16 +185,13 @@ async function sha256(str) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ======================
-// 验证逻辑
-// ======================
+// 第一题验证
 async function check1(){
   const input = document.getElementById("ans1").value;
   const inputHash = await sha256(input);
   if(inputHash === secureAnswer1){
     document.getElementById("step1").style.display="none";
     document.getElementById("step2").style.display="block";
-    // 答对后再加载录音，并且强制加载
     recordAudio.src = realAudioUrl;
     recordAudio.load();
     document.getElementById("player").style.display = "block";
@@ -197,14 +200,30 @@ async function check1(){
   }
 }
 
+// 第二题答对 显示第三题
 async function check2(){
   const input = document.getElementById("ans2").value;
   const inputHash = await sha256(input);
   if(inputHash === secureAnswer2){
-    document.getElementById("downArea").style.display="block";
-    document.getElementById("downloadLink").href = realAudioUrl;
+    document.getElementById("msg2").innerText="✅ 回答正确，请完成最后一题";
+    document.getElementById("step3").style.display = "block";
   }else{
     document.getElementById("msg2").innerText="❌ 再试一次吧";
+  }
+}
+
+// 第三题答对 → 跳转新页面
+async function check3(){
+  const input = document.getElementById("ans3").value;
+  const inputHash = await sha256(input);
+  if(inputHash === secureAnswer3){
+    document.getElementById("msg3").innerText="✅ 全部正确，正在跳转...";
+    // 延迟1秒跳转，更有氛围感
+    setTimeout(()=>{
+      window.location.href = targetPage;
+    },1000);
+  }else{
+    document.getElementById("msg3").innerText="❌ 答案错误，再试试～";
   }
 }
 </script>
