@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第二页</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif}
+#bgContainer{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-1;overflow:hidden}
+.bg-photo{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s ease}
+.bg-photo.active{opacity:1}
+#loadingTip{position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fceff4;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:999;color:#d15a7c}
+#loadingTip .spinner{width:40px;height:40px;border:4px solid #f06c9b;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;overflow:hidden}
+.box{background:rgba(255,255,255,0.9);padding:40px;border-radius:16px;width:100%;max-width:520px;text-align:center;backdrop-filter:blur(6px);z-index:1}
+h2{margin-bottom:20px;color:#d15a7c}
+p{margin-bottom:15px;color:#555}
+input{width:85%;padding:12px;border:1px solid #ddd;border-radius:10px;margin-bottom:16px;font-size:16px}
+.btn-pink{padding:12px 26px;background:#f06c9b;color:white;border:none;border-radius:10px;cursor:pointer;font-size:16px}
+#musicPlayer{position:fixed;left:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.9);padding:16px;border-radius:12px;backdrop-filter:blur(6px);z-index:2;min-width:180px}
+#musicPlayer h4{margin-bottom:10px;color:#d15a7c;font-size:15px}
+#musicList{list-style:none;margin-bottom:10px}
+#musicList li{padding:6px 8px;margin:4px 0;background:#f5f5f5;border-radius:6px;font-size:13px;color:#555;cursor:pointer}
+#musicList li:hover,#musicList li.active{background:#fceff4;color:#d15a7c}
+#bgMusic{width:100%}
+.tip{color:#e65c7c;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div id="loadingTip"><div class="spinner"></div><p>正在加载...</p></div>
+<div id="bgContainer"></div>
+
+<div id="musicPlayer">
+  <h4>🎵 点歌台</h4>
+  <ul id="musicList"><li data-src="20240427_222755郭同学.m4a">第一次通话</li></ul>
+  <audio id="bgMusic" controls></audio>
+</div>
+
+<div class="box">
+  <h2>第二题：继续回忆</h2>
+  <p>问题：我们初遇在哪里？</p>
+  <input id="ans" placeholder="请输入答案">
+  <button class="btn-pink" onclick="check()">验证答案</button>
+  <div class="tip" id="msg"></div>
+</div>
+
+<script>
+const answer = "c71eb66a97508763d934f64bc43f4c1b441f4a90f256c95c4ca64660522298c7";
+const nextPage = "page3.html";
+
+async function sha256(str){const e=new TextEncoder,t=e.encode(str.trim()),n=await crypto.subtle.digest("SHA-256",t);return Array.from(new Uint8Array(n)).map(e=>e.toString(16).padStart(2,"0")).join("")}
+async function check(){const e=document.getElementById("ans").value,n=await sha256(e);n===answer?(document.getElementById("msg").innerText="✅ 正确！跳转中...",setTimeout(()=>{location.href=nextPage},1e3)):document.getElementById("msg").innerText="❌ 再试一次"}
+
+const totalPhotos=100,photoPath="imgs/bg",photoExt=".png";
+function preload(){let e=0,t=document.getElementById("bgContainer");for(let n=1;n<=totalPhotos;n++){let i=new Image;i.src=photoPath+n+photoExt,i.classList.add("bg-photo"),1==n&&i.classList.add("active"),t.appendChild(i),i.onload=()=>{e++,e==totalPhotos&&(document.getElementById("loadingTip").style.display="none",setInterval(()=>{let e=document.querySelectorAll(".bg-photo"),n=document.querySelector(".bg-photo.active"),o=Array.from(e).indexOf(n);n.classList.remove("active"),e[(o+1)%e.length].classList.add("active")},5e3))}}
+preload();
+
+const bgMusic=document.getElementById("bgMusic");
+document.getElementById("musicList").onclick=e=>{e.target.tagName=="LI"&&(bgMusic.src=e.target.dataset.src,bgMusic.play())};
+</script>
+</body>
+</html>
